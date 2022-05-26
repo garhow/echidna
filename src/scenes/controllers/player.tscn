@@ -63,7 +63,7 @@ animations = [ {
 "speed": 5.0
 } ]
 
-[node name="Player" type="Area2D"]
+[node name="Player" type="KinematicBody2D"]
 script = ExtResource( 2 )
 
 [node name="Camera" type="Camera2D" parent="."]
@@ -87,25 +87,3 @@ disabled = true
 frames = SubResource( 1 )
 animation = "Standing"
 playing = true
-
-[node name="Raycasts" type="Node2D" parent="."]
-
-[node name="LeftBottom" type="RayCast2D" parent="Raycasts"]
-position = Vector2( -8, 0 )
-enabled = true
-cast_to = Vector2( 0, 20 )
-
-[node name="RightBottom" type="RayCast2D" parent="Raycasts"]
-position = Vector2( 8, 0 )
-enabled = true
-cast_to = Vector2( 0, 20 )
-
-[node name="LeftTop" type="RayCast2D" parent="Raycasts"]
-position = Vector2( -8, 0 )
-enabled = true
-cast_to = Vector2( 0, -20 )
-
-[node name="RightTop" type="RayCast2D" parent="Raycasts"]
-position = Vector2( 8, 0 )
-enabled = true
-cast_to = Vector2( 0, -20 )

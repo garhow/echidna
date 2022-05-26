@@ -1,6 +1,6 @@
 class_name Player
 
-extends Area2D
+extends KinematicBody2D
 
 const MULTIPLICATION = 1
 
@@ -26,7 +26,6 @@ const animations = {
 }
 
 # Player states
-var is_grounded : bool = false
 var is_jumping : bool = false
 var is_skidding : bool = false
 
@@ -36,8 +35,6 @@ var ground_speed : float = 0  # The speed at which the player is moving on the g
 
 # Node variables
 onready var default_collision = get_node("DefaultCollision")
-onready var raycast_leftbottom = get_node("Raycasts/LeftBottom")
-onready var raycast_rightbottom = get_node("Raycasts/RightBottom")
 onready var spherical_collision = get_node("SphericalCollision")
 onready var sprite = get_node("Sprites")
 
@@ -46,33 +43,26 @@ onready var sprite = get_node("Sprites")
 ##
 
 func _physics_process(delta):
-	process_raycasts()
 	process_jumping()
 	process_movement()
 	process_animation()
-	#print(velocity)
-	transform.origin += velocity
-
-func process_raycasts():
-	if raycast_leftbottom.is_colliding() and raycast_rightbottom.is_colliding():
-		is_grounded = true
-	else:
-		is_grounded = false
+	print(velocity)
+	velocity = move_and_slide(velocity, Vector2.UP, false)
 
 func process_jumping():
 	if is_jumping:
-		default_collision.disabled = true
+		default_collision.disabled
 		spherical_collision.disabled = false
 	elif !is_jumping:
 		default_collision.disabled = false
 		spherical_collision.disabled = true
 
 func process_movement():
-	if is_grounded:
+	if is_on_floor():
 		is_jumping = false
 		velocity.y = 0
 		ground_movement()
-	elif !is_grounded:
+	elif !is_on_floor():
 		velocity.y += Vector2.DOWN.y * GRAVITY
 
 func ground_movement():
@@ -108,7 +98,7 @@ func ground_movement():
 
 func process_animation():
 	sprite.speed_scale = 1
-	if is_grounded:
+	if is_on_floor():
 		if ground_speed == 0:
 			# Play idle animation if not moving
 			sprite.play(animations.stand)

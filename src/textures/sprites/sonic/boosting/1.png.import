@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/2.png-7216a273dd72cd24bc07fddd1bdb410f.stex"
+path="res://.import/1.png-5296559c58f6e89eb56cd750f7f01d53.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/backgrounds/test_zone/2.png"
-dest_files=[ "res://.import/2.png-7216a273dd72cd24bc07fddd1bdb410f.stex" ]
+source_file="res://textures/sprites/sonic/boosting/1.png"
+dest_files=[ "res://.import/1.png-5296559c58f6e89eb56cd750f7f01d53.stex" ]
 
 [params]
 
@@ -19,7 +19,7 @@ compress/lossy_quality=0.7
 compress/hdr_mode=0
 compress/bptc_ldr=0
 compress/normal_map=0
-flags/repeat=1
+flags/repeat=0
 flags/filter=false
 flags/mipmaps=false
 flags/anisotropic=false

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/2.png-7216a273dd72cd24bc07fddd1bdb410f.stex"
+path="res://.import/ramp.png-d767b6990ea3829e95d33b00121f9235.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/backgrounds/test_zone/2.png"
-dest_files=[ "res://.import/2.png-7216a273dd72cd24bc07fddd1bdb410f.stex" ]
+source_file="res://textures/tiles/test_zone/ramp.png"
+dest_files=[ "res://.import/ramp.png-d767b6990ea3829e95d33b00121f9235.stex" ]
 
 [params]
 
@@ -19,7 +19,7 @@ compress/lossy_quality=0.7
 compress/hdr_mode=0
 compress/bptc_ldr=0
 compress/normal_map=0
-flags/repeat=1
+flags/repeat=0
 flags/filter=false
 flags/mipmaps=false
 flags/anisotropic=false

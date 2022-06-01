@@ -29,16 +29,6 @@
 
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
-"frames": [ ExtResource( 6 ), ExtResource( 11 ), ExtResource( 12 ), ExtResource( 10 ), ExtResource( 14 ), ExtResource( 9 ), ExtResource( 8 ), ExtResource( 13 ) ],
-"loop": true,
-"name": "Walking",
-"speed": 8.0
-}, {
-"frames": [ ExtResource( 24 ), ExtResource( 25 ), ExtResource( 26 ), ExtResource( 27 ) ],
-"loop": true,
-"name": "Boosting",
-"speed": 4.0
-}, {
 "frames": [ ExtResource( 16 ), ExtResource( 18 ), ExtResource( 17 ), ExtResource( 18 ), ExtResource( 20 ), ExtResource( 18 ), ExtResource( 15 ), ExtResource( 18 ) ],
 "loop": true,
 "name": "Rolling",
@@ -49,10 +39,20 @@ animations = [ {
 "name": "Skidding",
 "speed": 3.0
 }, {
+"frames": [ ExtResource( 24 ), ExtResource( 25 ), ExtResource( 26 ), ExtResource( 27 ) ],
+"loop": true,
+"name": "Boosting",
+"speed": 4.0
+}, {
 "frames": [ ExtResource( 4 ), ExtResource( 7 ), ExtResource( 3 ), ExtResource( 5 ) ],
 "loop": true,
 "name": "Running",
 "speed": 4.0
+}, {
+"frames": [ ExtResource( 6 ), ExtResource( 11 ), ExtResource( 12 ), ExtResource( 10 ), ExtResource( 14 ), ExtResource( 9 ), ExtResource( 8 ), ExtResource( 13 ) ],
+"loop": true,
+"name": "Walking",
+"speed": 8.0
 }, {
 "frames": [  ],
 "loop": true,
@@ -74,6 +74,7 @@ zoom = Vector2( 0.5, 0.5 )
 smoothing_enabled = true
 
 [node name="RichTextLabel" type="RichTextLabel" parent="Camera"]
+visible = false
 margin_left = 11.0
 margin_top = -4.0
 margin_right = 35.0
@@ -91,36 +92,42 @@ margin_right = 100.0
 margin_bottom = -25.0
 alignment = 2
 
-[node name="Grounded" type="Label" parent="Camera/Debug"]
+[node name="Angle" type="Label" parent="Camera/Debug"]
 margin_right = 200.0
 margin_bottom = 14.0
 
-[node name="Underwater" type="Label" parent="Camera/Debug"]
+[node name="Jumped" type="Label" parent="Camera/Debug"]
 margin_top = 18.0
 margin_right = 200.0
 margin_bottom = 32.0
 
-[node name="Jumped" type="Label" parent="Camera/Debug"]
+[node name="Grounded" type="Label" parent="Camera/Debug"]
 margin_top = 36.0
 margin_right = 200.0
 margin_bottom = 50.0
 
-[node name="Rolling" type="Label" parent="Camera/Debug"]
+[node name="Underwater" type="Label" parent="Camera/Debug"]
 margin_top = 54.0
 margin_right = 200.0
 margin_bottom = 68.0
 
-[node name="Speed" type="Label" parent="Camera/Debug"]
+[node name="GroundMode" type="Label" parent="Camera/Debug"]
 margin_top = 72.0
 margin_right = 200.0
 margin_bottom = 86.0
 
-[node name="Angle" type="Label" parent="Camera/Debug"]
+[node name="Rolling" type="Label" parent="Camera/Debug"]
 margin_top = 90.0
 margin_right = 200.0
 margin_bottom = 104.0
 
+[node name="Speed" type="Label" parent="Camera/Debug"]
+margin_top = 108.0
+margin_right = 200.0
+margin_bottom = 122.0
+
 [node name="Sprites" type="AnimatedSprite" parent="."]
+z_index = -1
 frames = SubResource( 1 )
 animation = "Standing"
 playing = true

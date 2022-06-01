@@ -58,8 +58,9 @@ enum GroundMode {
 # Variables
 ##
 
-# Engine
+# Debug
 export var debug = true
+var debug_lines = []
 
 # States
 var grounded : bool
@@ -80,12 +81,10 @@ func heightHalf():
 	if rolling or jumped: return ballHeight
 	else: return standingHeight / 2
 
-var standLeftRPos : Vector2
-var spinLeftRPos : Vector2
-var standRightRPos : Vector2
-var spinRightRPos : Vector2
-
-var waterLevel : Transform
+var standLeftRPos : Vector2 = Vector2(-standWidthHalf, 0)
+var spinLeftRPos : Vector2 = Vector2(-spinWidthHalf, 0)
+var standRightRPos : Vector2 = Vector2(standWidthHalf, 0)
+var spinRightRPos : Vector2 = Vector2(spinWidthHalf, 0)
 
 func leftRaycastPos():
 	if rolling or jumped: return spinLeftRPos
@@ -128,17 +127,11 @@ var uwJumpReleaseThreshold : float = 120
 
 # Nodes
 onready var animator = $Sprites
+onready var waterLevel : Transform = get_tree().get_nodes_in_group("WaterLevel")[0].transform
 
 ##
 # Script functions
 ##
-
-func _ready():
-	waterLevel = get_tree().get_nodes_in_group("WaterLevel")[0].transform
-	standLeftRPos = Vector2(-standWidthHalf, 0)
-	standRightRPos = Vector2(standWidthHalf, 0)
-	spinLeftRPos = Vector2(-spinWidthHalf, 0)
-	spinRightRPos = Vector2(spinWidthHalf, 0)
 
 func _process(_delta):
 	if Input.is_action_just_pressed("Toggle Debug"): debug = !debug
@@ -422,12 +415,18 @@ func _physics_process(delta):
 		animator.play(animations.roll)
 	
 	if !underwater and position.y <= waterLevel.origin.y:
-		pass #EnterWater()
+		print("mokey2")
+		EnterWater()
 	elif underwater and position.y > waterLevel.origin.y:
 		print("mokey")
-		#ExitWater()
+		ExitWater()
 	
 	rotation = rad2deg(characterAngle)
+
+func _draw():
+	for line in debug_lines:
+		draw_line(line[0], line[1], line[2])
+	update()
 
 ##
 # Functions
@@ -456,6 +455,9 @@ func WallCheck(distance : float, heightOffset : float):
 	hitRight.position = pos
 	hitRight.cast_to = Vector2.RIGHT * distance
 	
+	debug_lines.append([pos, pos + (Vector2.LEFT * distance), Color.yellow])
+	debug_lines.append([pos, pos + (Vector2.RIGHT * distance), Color.yellow])
+	
 	return [hitLeft, hitRight]
 
 func GroundedCheck(distance : float, groundMode):
@@ -478,6 +480,9 @@ func GroundedCheck(distance : float, groundMode):
 	rightHit.position = position + rightCastPos
 	rightHit.cast_to = dir * distance
 	groundedRight = rightHit.is_colliding()
+	
+	debug_lines.append([position + leftCastPos, position + leftCastPos + (dir * distance), Color.magenta])
+	debug_lines.append([position + rightCastPos, position + rightCastPos + (dir * distance), Color.red])
 	
 	var found = null
 	
@@ -558,6 +563,7 @@ func StickToGround(info : GroundInfo):
 
 func debug_info():
 	if debug:
+		$Camera/Debug/GroundMode.text = "Ground Mode: " + str(groundMode)
 		$Camera/Debug/Grounded.text = "Grounded: " + str(grounded)
 		$Camera/Debug/Jumped.text = "Jumped: " + str(jumped)
 		$Camera/Debug/Underwater.text = "Underwater: " + str(underwater)

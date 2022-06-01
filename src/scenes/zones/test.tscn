@@ -105,7 +105,6 @@ scale = Vector2( 2, 2 )
 texture = ExtResource( 6 )
 
 [node name="Water" type="StaticBody2D" parent="." groups=["WaterLevel"]]
-position = Vector2( 0, 500 )
 
 [node name="Sprite" type="Sprite" parent="Water"]
 modulate = Color( 1, 1, 1, 0.392157 )

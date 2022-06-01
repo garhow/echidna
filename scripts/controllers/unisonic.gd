@@ -94,11 +94,6 @@ func rightRaycastPos():
 	if rolling or jumped: return spinRightRPos
 	else: return standRightRPos
 
-var speedHash : String = "Running"
-var standHash : String = "Standing"
-var spinHash : String = "Spinning"
-var pushHash : String = "Walking"
-
 # Physics - Ground
 var groundVelocity : float
 var hControlLock : bool
@@ -318,53 +313,45 @@ func _physics_process(delta):
 			velocity.x = 0
 			groundVelocity = 0
 	
-	var ceilingCeil : GroundInfo
-	var ceilingLeft = false
-	var ceilingRight = false
-	var ceilDir : int = groundMode + 2
-	if ceilDir > 3: ceilDir -= 4
+	var ceilDir : int = -(groundMode + 2)
+	if ceilDir < -3: ceilDir += 4
 	
-	var ceiling = GroundedCheck(groundRaycastDist, ceilDir)
-	
-	ceilingCeil = ceiling[0]
-	ceilingLeft = ceiling[1]
-	ceilingRight = ceiling[2]
-	
-	var groundedLeft = false
-	var groundedRight = false
+	var ceiling = GroundedCheck(groundRaycastDist, ceilDir)[0]
 	
 	if grounded:
 		var currentGround = GroundedCheck(groundRaycastDist, groundMode)
 		currentGroundInfo = currentGround[0]
 		grounded = currentGround[1] || currentGround[2]
 	else:
-		if ceilingCeil.valid and velocity.y > 0:
+		if ceiling.valid and velocity.y > 0:
 			var hitCeiling = false
-			if position.y >= ceilingCeil.point.y - heightHalf(): hitCeiling = true
+			if position.y >= ceiling.point.y - heightHalf(): hitCeiling = true
 			
-			var angleDeg : float = rad2deg(ceilingCeil.angle)
+			var angleDeg : float = rad2deg(ceiling.angle)
 			
 			# Check for attaching to ceiling
 			if hitCeiling and ((angleDeg >= 225 and angleDeg <= 270) or (angleDeg >= 90 and angleDeg <= 135)):
 				grounded = true
 				jumped = false
 				rolling = false
-				currentGroundInfo = ceilingCeil
+				currentGroundInfo = ceiling
 				groundMode = GroundMode.CEILING
 				groundVelocity = velocity.y * sign(sin(currentGroundInfo.angle))
 				velocity.y = 0
 			elif hitCeiling:
-				if position.y > ceilingCeil.point.y - heightHalf():
-					position = Vector2(position.x, ceilingCeil.point.y - heightHalf())
+				if position.y > ceiling.point.y - heightHalf():
+					position = Vector2(position.x, ceiling.point.y - heightHalf())
 					velocity.y = 0
 		else:
 			var infoFull = GroundedCheck(groundRaycastDist, GroundMode.FLOOR)
 			
 			var info : GroundInfo = infoFull[0]
-			groundedLeft = infoFull[1]
-			groundedRight = infoFull[2]
+			var groundedLeft = infoFull[1]
+			var groundedRight = infoFull[2]
 			
 			grounded = (groundedLeft || groundedRight) && velocity.y <= 0 && position.y <= (info.height + heightHalf())
+			
+			if groundedLeft or groundedRight: print("FOUND FLOOR")
 			
 			if grounded:
 				if jumped:
@@ -393,7 +380,7 @@ func _physics_process(delta):
 		animator.play(animations.run)
 		animator.speed_scale = abs(groundVelocity)
 		
-		lowCeiling = ceilingCeil.valid && position.y > ceilingCeil.point.y - 25
+		lowCeiling = ceiling.valid && position.y > ceiling.point.y - 25
 	else:
 		currentGroundInfo = null
 		groundMode = GroundMode.FLOOR
@@ -414,18 +401,17 @@ func _physics_process(delta):
 	if rolling or jumped:
 		animator.play(animations.roll)
 	
-	if !underwater and position.y <= waterLevel.origin.y:
-		print("mokey2")
-		EnterWater()
-	elif underwater and position.y > waterLevel.origin.y:
-		print("mokey")
-		ExitWater()
+	#if !underwater and position.y <= waterLevel.origin.y:
+		#EnterWater()
+	#elif underwater and position.y > waterLevel.origin.y:
+		#ExitWater()
 	
-	rotation = rad2deg(characterAngle)
+	#rotation = rad2deg(SnapAngle(characterAngle))
 
 func _draw():
-	for line in debug_lines:
-		draw_line(line[0], line[1], line[2])
+	if debug:
+		for line in debug_lines:
+			draw_line(line[0], line[1], line[2])
 	update()
 
 ##
@@ -448,49 +434,46 @@ func WallCheck(distance : float, heightOffset : float):
 	var hitLeft = RayCast2D.new()
 	hitLeft.enabled = true
 	hitLeft.position = pos
-	hitLeft.cast_to = Vector2.LEFT * distance
+	hitLeft.cast_to = pos + Vector2.LEFT * distance
 	
 	var hitRight = RayCast2D.new()
 	hitRight.enabled = true
 	hitRight.position = pos
-	hitRight.cast_to = Vector2.RIGHT * distance
+	hitRight.cast_to = pos + Vector2.RIGHT * distance
 	
 	debug_lines.append([pos, pos + (Vector2.LEFT * distance), Color.yellow])
 	debug_lines.append([pos, pos + (Vector2.RIGHT * distance), Color.yellow])
 	
 	return [hitLeft, hitRight]
 
-func GroundedCheck(distance : float, groundMode):
-	var groundedLeft : bool
-	var groundedRight : bool
-	
-	var rot = Transform2D().rotated(deg2rad(90 * groundMode))
+func GroundedCheck(distance : float, groundModeNeo):
+	var rot = 1 # Transform2D().rotated(deg2rad(0 * groundModeNeo))
 	var dir = rot * Vector2.DOWN
 	var leftCastPos = rot * leftRaycastPos()
 	var rightCastPos = rot * rightRaycastPos()
 	
-	var leftHit = RayCast2D.new()
+	var leftHit = $Casts/LowerLeft
 	leftHit.enabled = true
 	leftHit.position = position + leftCastPos
 	leftHit.cast_to = dir * distance
-	groundedLeft = leftHit.is_colliding()
+	var groundedLeft = leftHit.is_colliding()
 	
-	var rightHit = RayCast2D.new()
+	var rightHit = $Casts/LowerRight
 	rightHit.enabled = true
 	rightHit.position = position + rightCastPos
 	rightHit.cast_to = dir * distance
-	groundedRight = rightHit.is_colliding()
+	var groundedRight = rightHit.is_colliding()
 	
-	debug_lines.append([position + leftCastPos, position + leftCastPos + (dir * distance), Color.magenta])
-	debug_lines.append([position + rightCastPos, position + rightCastPos + (dir * distance), Color.red])
+	#debug_lines.append([position - leftCastPos, position - leftCastPos - (dir * distance), Color.magenta])
+	#debug_lines.append([position - rightCastPos, position - rightCastPos - (dir * distance), Color.red])
 	
-	var found = null
+	var found : GroundInfo = null
 	
 	if groundedLeft and groundedRight:
 		var leftCompare : float = 0
 		var rightCompare : float = 0
 		
-		match groundMode:
+		match groundModeNeo:
 			GroundMode.FLOOR:
 				leftCompare = leftHit.get_collision_point().y
 				rightCompare = rightHit.get_collision_point().y
@@ -506,11 +489,16 @@ func GroundedCheck(distance : float, groundMode):
 			_:
 				pass
 		
+		if distance == 36: print(position - leftHit.cast_to)
+		
 		if leftCompare >= rightCompare: found = GetGroundInfoCast(leftHit)
 		else: found = GetGroundInfoCast(rightHit)
+	
 	elif groundedLeft: found = GetGroundInfoCast(leftHit)
 	elif groundedRight: found = GetGroundInfoCast(rightHit)
 	else: found = GroundInfo.new()
+	
+	if groundedLeft or groundedRight: print("Gaming Grounded")
 	
 	return [found, groundedLeft, groundedRight]
 
@@ -524,18 +512,19 @@ func GetGroundInfoVector(center : Vector2):
 		info.height = groundHit.get_collision_point().y
 		info.point = groundHit.get_collision_point()
 		info.normal = groundHit.get_collision_normal()
-		info.angle = Vector2().angle_to(info.normal)
+		info.angle = Vector2ToAngle(info.normal)
 		info.valid = true
+	return info
 
 func GetGroundInfoCast(hit : RayCast2D):
 	var info = GroundInfo.new()
-	print("trying")
 	if hit.get_collider() != null:
 		info.height = hit.get_collision_point().y
 		info.point = hit.get_collision_point()
 		info.normal = hit.get_collision_normal()
-		info.angle = Vector2().angle_to(info.normal)
+		info.angle = Vector2ToAngle(info.normal)
 		info.valid = true
+	return info
 
 func StickToGround(info : GroundInfo):
 	var angle : float = rad2deg(info.angle)
@@ -561,6 +550,19 @@ func StickToGround(info : GroundInfo):
 		_:
 			pass
 
+# Returns angle snapped to the closest 45-degree increment
+func SnapAngle(angle : float):
+	var mult : int = angle + 22.5
+	mult /= 45
+	return mult * 45
+
+# Converts vector to 0-360 degree (counter-clockwise) angle, with a vector pointing straight up as zero
+func Vector2ToAngle(vector : Vector2):
+	var angle : float = atan2(vector.y, vector.x) - (PI / 2)
+	if angle < 0: angle += PI * 2
+	return angle
+
+# Displays debug information
 func debug_info():
 	if debug:
 		$Camera/Debug/GroundMode.text = "Ground Mode: " + str(groundMode)

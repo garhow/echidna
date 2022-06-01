@@ -1,25 +1,22 @@
 # Generic character controller script (physics and animation)
 
-extends KinematicBody2D # Inherits properties and functions of Area2D type
+extends Area2D # Inherits properties and functions of Area2D type
 
 ##
 # Constants
 ##
 
-
-const PHYSICS_MULTIPLIER = 40 # Physics scale multiplier
-
 # Physics
-const ACCELERATION = 0.046875 * PHYSICS_MULTIPLIER # Acceleration factor
-const DECELERATION = 0.1 * PHYSICS_MULTIPLIER # Deceleration factor
-const FALL_THRESHOLD = 2.5 * PHYSICS_MULTIPLIER # Tolerance speed for sticking to walls and ceilings
-const FRICTION = 0.046875 * PHYSICS_MULTIPLIER # Friction (same as acceleration)
-const GRAVITY = 0.21875 * PHYSICS_MULTIPLIER # Gravity
-const JUMP_FORCE = 6.5 * PHYSICS_MULTIPLIER # Jump force (6 for Knuckles)
-const SLOPE = 0.125 * PHYSICS_MULTIPLIER # Slope factor when walking/running
-const SLOPE_ROLL_DOWN = 0.3125 * PHYSICS_MULTIPLIER # Slope factor when rolling downhill
-const SLOPE_ROLL_UP = 0.078125 * PHYSICS_MULTIPLIER # Slope factor when rolling uphill
-const TOP_SPEED = 6 * PHYSICS_MULTIPLIER # Top movement speed
+const ACCELERATION = 0.046875 # Acceleration factor
+const DECELERATION = 0.1 # Deceleration factor
+const FALL_THRESHOLD = 2.5 # Tolerance speed for sticking to walls and ceilings
+const FRICTION = 0.046875 # Friction (same as acceleration)
+const GRAVITY = 0.21875 # Gravity
+const JUMP_FORCE = 6.5 # Jump force (6 for Knuckles)
+const SLOPE = 0.125 # Slope factor when walking/running
+const SLOPE_ROLL_DOWN = 0.3125 # Slope factor when rolling downhill
+const SLOPE_ROLL_UP = 0.078125 # Slope factor when rolling uphill
+const TOP_SPEED = 6 # Top movement speed
 
 # Animations
 const ANIMATIONS = {
@@ -52,12 +49,19 @@ var is_pushing : bool = false # Is the player pushing an object?
 var is_rolling : bool = false # Is the player rolling?
 var is_skidding : bool = false # Is the player skidding?
 
+# Editor
+var debug : bool = true # Enables debug mode
+
 ##
 # Functions
 ##
 
 func _process(_delta):
-	info_text.text = "state: "+str(state)+"\ndirection: "+str(direction)+"\nvelocity: "+str(floor(velocity.x))+", "+str(floor(velocity.y))+"\nis_grounded: "+str(is_grounded)+"\nis_jumping: "+str(is_jumping)+"\nis_pushing: "+str(is_pushing)+"\nsphere_col: "+str(!$SphericalCollision.disabled)
+	#info_text.text = "state: "+str(state)+"\ndirection: "+str(direction)+"\nvelocity: "+str(floor(velocity.x))+", "+str(floor(velocity.y))+"\nis_grounded: "+str(is_grounded)+"\nis_jumping: "+str(is_jumping)+"\nis_pushing: "+str(is_pushing)+"\nsphere_col: "+str(!$SphericalCollision.disabled)
+	if debug:
+		debug_info()
+	if Input.is_action_just_pressed("restart"):
+		restart_game()
 
 func _physics_process(_delta):
 	check_state()
@@ -110,7 +114,7 @@ func state_normal():
 	# TODO
 	
 	# 10: Move sonic
-	velocity = move_and_slide(velocity, Vector2.UP)
+	transform.origin += velocity
 	
 	# 11: Floor sensor collision occurs
 	collision_check_ground()
@@ -138,7 +142,7 @@ func state_airborne():
 	
 	# 5: Move player (update X position and Y position based on X speed and Y speed)
 	# TODO
-	velocity = move_and_slide(velocity, Vector2.UP)
+	transform.origin += velocity
 	
 	# 6: Apply gravity (update Y speed by adding GRAVITY to it)
 	velocity.y += Vector2.DOWN.y * GRAVITY
@@ -155,14 +159,8 @@ func state_airborne():
 
 func jump_check():
 	is_jumping = false
-	if $DefaultCollision.disabled:
-		$DefaultCollision.disabled = false
-		$SphericalCollision.disabled = true
 	if Input.is_action_just_pressed("jump"):
-		velocity.x -= JUMP_FORCE * sin(0)
-		velocity.y -= JUMP_FORCE * cos(0)
-		$DefaultCollision.disabled = true
-		$SphericalCollision.disabled = false
+		velocity -= Vector2(JUMP_FORCE * sin(rotation_degrees), JUMP_FORCE * cos(rotation_degrees))
 		is_jumping = true
 		is_grounded = false
 
@@ -221,19 +219,14 @@ func airborne_movement():
 	velocity.x = speed
 
 func collision_check_ground():
-	if is_on_floor() or $LowerLeft.is_colliding() or $LowerRight.is_colliding():
+	if $LowerLeft.is_colliding() or $LowerRight.is_colliding():
 		is_grounded = true
 		velocity.y = 0
 	else:
 		is_grounded = false
 
 func collision_check_wall():
-	if is_on_wall():
-		velocity.x = 0
-		if $MidLeft.is_colliding() and direction == 0:
-			speed = 0
-		elif $MidRight.is_colliding() and direction == 1:
-			speed = 0
+	pass
 
 ##
 # Direction manager
@@ -274,3 +267,21 @@ func process_animation():
 		sprite.play(ANIMATIONS.roll)
 	if is_skidding:
 		sprite.play(ANIMATIONS.skid)
+
+##
+# Game functions
+##
+
+func debug_info():
+	var debug_state = "state: " + str(state)
+	var debug_speed = "speed: " + str(round(speed))
+	var debug_position = "position: " + str(position.round())
+	var debug_rotation = "rotation: " + str(round(rotation_degrees))
+	var debug_velocity = "velocity: " + str(velocity.round())
+	$Camera/Debug.text = (debug_state + "\n" + debug_speed + "\n" + debug_position + "\n" + debug_rotation + "\n" + debug_velocity)
+	
+
+func restart_game():
+	speed = 0
+	velocity = Vector2.ZERO
+	transform.origin = Vector2.ZERO

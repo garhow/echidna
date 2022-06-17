@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bodu04ox6y23t"
-path="res://.godot/imported/icon.png-487276ed1e3a0c39cad0279d744ee560.ctex"
+uid="uid://de4rnlopcib3m"
+path="res://.godot/imported/4.png-08c78ec7301d24dbb9e497252c442077.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://icon.png"
-dest_files=["res://.godot/imported/icon.png-487276ed1e3a0c39cad0279d744ee560.ctex"]
+source_file="res://textures/controllers/sonic/rolling/4.png"
+dest_files=["res://.godot/imported/4.png-08c78ec7301d24dbb9e497252c442077.ctex"]
 
 [params]
 

@@ -2,6 +2,9 @@
 # Godot Engine
 ##
 
+# Godot 4+ exclusive ignores
+.godot/
+
 # Godot-specific ignores
 .import/
 export.cfg

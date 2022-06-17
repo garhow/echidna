@@ -1,0 +1,209 @@
+[gd_scene load_steps=45 format=3 uid="uid://s8j68qaigc3u"]
+
+[ext_resource type="Texture2D" uid="uid://d2ots4vx1sumq" path="res://textures/controllers/sonic/idle/0.png" id="1_xtnne"]
+[ext_resource type="Script" path="res://scenes/controllers/movement.gd" id="1_xu54f"]
+[ext_resource type="Texture2D" uid="uid://dviqg0rddnyah" path="res://textures/controllers/sonic/idle/1.png" id="2_s83cm"]
+[ext_resource type="Texture2D" uid="uid://cgfdviag5xb8q" path="res://textures/controllers/sonic/idle/2.png" id="3_7xeau"]
+[ext_resource type="Texture2D" uid="uid://cx7hbkn51ts7o" path="res://textures/controllers/sonic/idle/3.png" id="4_n6vka"]
+[ext_resource type="Texture2D" uid="uid://debgr1ujoacg7" path="res://textures/controllers/sonic/idle/4.png" id="5_xq1ln"]
+[ext_resource type="Texture2D" uid="uid://ud2rtwryei16" path="res://textures/controllers/sonic/idle/5.png" id="6_51gfi"]
+[ext_resource type="Texture2D" uid="uid://dlrg51a1wfaes" path="res://textures/controllers/sonic/idle/6.png" id="7_h2s37"]
+[ext_resource type="Texture2D" uid="uid://cg7v2msqkdn41" path="res://textures/controllers/sonic/idle/7.png" id="8_gk00h"]
+[ext_resource type="Texture2D" uid="uid://bwycap52bniqo" path="res://textures/controllers/sonic/idle/8.png" id="9_wwiqt"]
+[ext_resource type="Texture2D" uid="uid://b0w440p1tpp6n" path="res://textures/controllers/sonic/idle/9.png" id="10_hv3qp"]
+[ext_resource type="Texture2D" uid="uid://d4mh3f4e46ykt" path="res://textures/controllers/sonic/idle/10.png" id="11_4m88w"]
+[ext_resource type="Texture2D" uid="uid://b87hms5umtxno" path="res://textures/controllers/sonic/idle/11.png" id="12_jtlo3"]
+[ext_resource type="Texture2D" uid="uid://b44rf5p25u78" path="res://textures/controllers/sonic/idle/12.png" id="13_2pcbq"]
+[ext_resource type="Texture2D" uid="uid://lgphr4i2p0jm" path="res://textures/controllers/sonic/idle/13.png" id="14_tr0fv"]
+[ext_resource type="Texture2D" uid="uid://cxr8o8n3fs23j" path="res://textures/controllers/sonic/idle/14.png" id="15_h25tk"]
+[ext_resource type="Texture2D" uid="uid://55es3taqhtej" path="res://textures/controllers/sonic/idle/15.png" id="16_u6rtn"]
+[ext_resource type="Texture2D" uid="uid://tu78lk7k6wvh" path="res://textures/controllers/sonic/running/0.png" id="17_jdwxb"]
+[ext_resource type="Texture2D" uid="uid://brp1boblr7nek" path="res://textures/controllers/sonic/running/1.png" id="18_dw325"]
+[ext_resource type="Texture2D" uid="uid://byjf76m2g12jp" path="res://textures/controllers/sonic/running/2.png" id="19_38lp2"]
+[ext_resource type="Texture2D" uid="uid://cc6ueiyqyhsih" path="res://textures/controllers/sonic/running/3.png" id="20_hnwya"]
+[ext_resource type="Texture2D" uid="uid://5546map41814" path="res://textures/controllers/sonic/peelout/0.png" id="21_2bexg"]
+[ext_resource type="Texture2D" uid="uid://ym61ufhv6tl5" path="res://textures/controllers/sonic/peelout/1.png" id="22_fnfl6"]
+[ext_resource type="Texture2D" uid="uid://df1wctj4iujur" path="res://textures/controllers/sonic/peelout/2.png" id="23_wgrsn"]
+[ext_resource type="Texture2D" uid="uid://by3qoqvdwuu7j" path="res://textures/controllers/sonic/peelout/3.png" id="24_p6uh1"]
+[ext_resource type="Texture2D" uid="uid://bfet62a4li8hm" path="res://textures/controllers/sonic/rolling/1.png" id="25_2snhh"]
+[ext_resource type="Texture2D" uid="uid://dw3ql0deixomb" path="res://textures/controllers/sonic/rolling/0.png" id="26_5vc8c"]
+[ext_resource type="Texture2D" uid="uid://blqrdrgnnl3xl" path="res://textures/controllers/sonic/rolling/2.png" id="27_3qqu1"]
+[ext_resource type="Texture2D" uid="uid://qpw7w8j18jqh" path="res://textures/controllers/sonic/rolling/3.png" id="28_d1h4f"]
+[ext_resource type="Texture2D" uid="uid://de4rnlopcib3m" path="res://textures/controllers/sonic/rolling/4.png" id="29_ktk1q"]
+[ext_resource type="Texture2D" uid="uid://dicgn5ww35k3c" path="res://textures/controllers/sonic/spindash/0.png" id="30_6ekef"]
+[ext_resource type="Texture2D" uid="uid://bgbl1ber3k514" path="res://textures/controllers/sonic/spindash/1.png" id="31_q2wr5"]
+[ext_resource type="Texture2D" uid="uid://bu6arkbqclxke" path="res://textures/controllers/sonic/spindash/2.png" id="32_1n5a0"]
+[ext_resource type="Texture2D" uid="uid://c87h2sqm4v7bx" path="res://textures/controllers/sonic/spindash/3.png" id="33_xn0v2"]
+[ext_resource type="Texture2D" uid="uid://dhpvgk8mlfwkt" path="res://textures/controllers/sonic/spindash/4.png" id="34_7mboi"]
+[ext_resource type="Texture2D" uid="uid://dcy70pwrui5r8" path="res://textures/controllers/sonic/spindash_charge/0.png" id="35_vnr8j"]
+[ext_resource type="Texture2D" uid="uid://blo2n2cq6oo35" path="res://textures/controllers/sonic/looking_up/0.png" id="36_w11r8"]
+[ext_resource type="Texture2D" uid="uid://cphws00t3icub" path="res://textures/controllers/sonic/looking_up/1.png" id="37_ow6he"]
+[ext_resource type="Texture2D" uid="uid://d1njud07eyc7t" path="res://textures/controllers/sonic/looking_down/0.png" id="38_xiknc"]
+[ext_resource type="Texture2D" uid="uid://b0kucidxldsk3" path="res://textures/controllers/sonic/looking_down/1.png" id="39_1b4e1"]
+[ext_resource type="Texture2D" uid="uid://c35ykwrm7oilo" path="res://textures/controllers/sonic/hit/0.png" id="41_8c78f"]
+[ext_resource type="Texture2D" uid="uid://jeykq1vncbpw" path="res://textures/controllers/sonic/hit/1.png" id="42_ywfei"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_yvnad"]
+animations = [{
+"frames": [ExtResource( "1_xtnne" ), ExtResource( "2_s83cm" ), ExtResource( "3_7xeau" ), ExtResource( "4_n6vka" ), ExtResource( "5_xq1ln" ), ExtResource( "4_n6vka" ), ExtResource( "5_xq1ln" ), ExtResource( "6_51gfi" ), ExtResource( "7_h2s37" ), ExtResource( "8_gk00h" ), ExtResource( "7_h2s37" ), ExtResource( "8_gk00h" ), ExtResource( "9_wwiqt" ), ExtResource( "10_hv3qp" ), ExtResource( "11_4m88w" ), ExtResource( "12_jtlo3" ), ExtResource( "13_2pcbq" ), ExtResource( "14_tr0fv" ), ExtResource( "15_h25tk" ), ExtResource( "16_u6rtn" ), ExtResource( "15_h25tk" ), ExtResource( "16_u6rtn" ), ExtResource( "14_tr0fv" ), ExtResource( "11_4m88w" ), ExtResource( "10_hv3qp" ), ExtResource( "9_wwiqt" )],
+"loop": true,
+"name": &"Idle",
+"speed": 5.0
+}, {
+"frames": [ExtResource( "17_jdwxb" ), ExtResource( "18_dw325" ), ExtResource( "19_38lp2" ), ExtResource( "20_hnwya" )],
+"loop": true,
+"name": &"Running",
+"speed": 5.0
+}, {
+"frames": [ExtResource( "21_2bexg" ), ExtResource( "22_fnfl6" ), ExtResource( "23_wgrsn" ), ExtResource( "24_p6uh1" )],
+"loop": true,
+"name": &"Peelout",
+"speed": 5.0
+}, {
+"frames": [ExtResource( "25_2snhh" ), ExtResource( "26_5vc8c" ), ExtResource( "27_3qqu1" ), ExtResource( "26_5vc8c" ), ExtResource( "28_d1h4f" ), ExtResource( "26_5vc8c" ), ExtResource( "29_ktk1q" ), ExtResource( "26_5vc8c" )],
+"loop": true,
+"name": &"Rolling",
+"speed": 5.01
+}, {
+"frames": [ExtResource( "30_6ekef" ), ExtResource( "31_q2wr5" ), ExtResource( "32_1n5a0" ), ExtResource( "33_xn0v2" ), ExtResource( "34_7mboi" )],
+"loop": true,
+"name": &"Spindash",
+"speed": 5.0
+}, {
+"frames": [ExtResource( "35_vnr8j" )],
+"loop": true,
+"name": &"Spindash Charge",
+"speed": 5.0
+}, {
+"frames": [ExtResource( "36_w11r8" ), ExtResource( "37_ow6he" )],
+"loop": false,
+"name": &"Looking Up",
+"speed": 5.0
+}, {
+"frames": [ExtResource( "38_xiknc" ), ExtResource( "39_1b4e1" )],
+"loop": false,
+"name": &"Looking Down",
+"speed": 5.0
+}, {
+"frames": [ExtResource( "41_8c78f" ), ExtResource( "42_ywfei" )],
+"loop": false,
+"name": &"Hit",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_knkpl"]
+size = Vector2(19, 39)
+
+[node name="Generic Controller" type="CharacterBody2D"]
+script = ExtResource( "1_xu54f" )
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+texture_filter = 1
+frames = SubResource( "SpriteFrames_yvnad" )
+animation = &"Hit"
+frame = 1
+playing = true
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource( "RectangleShape2D_knkpl" )
+
+[node name="Camera" type="Camera2D" parent="."]
+current = true
+zoom = Vector2(3, 3)
+smoothing_enabled = true
+
+[node name="Canvas" type="CanvasLayer" parent="."]
+
+[node name="Debug" type="VBoxContainer" parent="Canvas"]
+visible = false
+offset_right = 110.0
+offset_bottom = 40.0
+
+[node name="Input Jump" type="CheckBox" parent="Canvas/Debug"]
+offset_right = 142.0
+offset_bottom = 31.0
+text = "Input Jump"
+
+[node name="Input Move" type="Button" parent="Canvas/Debug"]
+offset_top = 35.0
+offset_right = 142.0
+offset_bottom = 66.0
+text = "Input Move: (0, 0)"
+flat = true
+alignment = 0
+
+[node name="Underwater" type="CheckBox" parent="Canvas/Debug"]
+offset_top = 70.0
+offset_right = 142.0
+offset_bottom = 101.0
+text = "Underwater"
+
+[node name="Jumped" type="CheckBox" parent="Canvas/Debug"]
+offset_top = 105.0
+offset_right = 142.0
+offset_bottom = 136.0
+text = "Jumped"
+
+[node name="Rolling" type="CheckBox" parent="Canvas/Debug"]
+offset_top = 140.0
+offset_right = 142.0
+offset_bottom = 171.0
+text = "Rolling"
+
+[node name="Control Lock" type="CheckBox" parent="Canvas/Debug"]
+offset_top = 175.0
+offset_right = 142.0
+offset_bottom = 206.0
+text = "Control Lock"
+
+[node name="Grounded" type="CheckBox" parent="Canvas/Debug"]
+offset_top = 210.0
+offset_right = 142.0
+offset_bottom = 241.0
+text = "Grounded"
+
+[node name="Air Drag" type="CheckBox" parent="Canvas/Debug"]
+offset_top = 245.0
+offset_right = 142.0
+offset_bottom = 276.0
+text = "Air Drag"
+
+[node name="Mode" type="Button" parent="Canvas/Debug"]
+offset_top = 280.0
+offset_right = 142.0
+offset_bottom = 311.0
+text = "Mode:"
+flat = true
+alignment = 0
+
+[node name="Ground Speed" type="Button" parent="Canvas/Debug"]
+offset_top = 315.0
+offset_right = 142.0
+offset_bottom = 346.0
+text = "Ground Speed: 0"
+flat = true
+alignment = 0
+
+[node name="Velocity" type="Button" parent="Canvas/Debug"]
+offset_top = 350.0
+offset_right = 142.0
+offset_bottom = 381.0
+text = "Velocity: (0, 0) (0)"
+flat = true
+alignment = 0
+
+[node name="Angle" type="Button" parent="Canvas/Debug"]
+offset_top = 385.0
+offset_right = 142.0
+offset_bottom = 416.0
+text = "Angle (Deg): --"
+flat = true
+alignment = 0
+
+[node name="Layer" type="Button" parent="Canvas/Debug"]
+offset_top = 420.0
+offset_right = 142.0
+offset_bottom = 451.0
+text = "Layer:"
+flat = true
+alignment = 0

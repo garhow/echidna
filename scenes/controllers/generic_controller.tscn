@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=3 uid="uid://s8j68qaigc3u"]
+[gd_scene load_steps=46 format=3 uid="uid://s8j68qaigc3u"]
 
 [ext_resource type="Texture2D" uid="uid://d2ots4vx1sumq" path="res://textures/controllers/sonic/idle/0.png" id="1_xtnne"]
 [ext_resource type="Script" path="res://scenes/controllers/movement.gd" id="1_xu54f"]
@@ -42,6 +42,7 @@
 [ext_resource type="Texture2D" uid="uid://b0kucidxldsk3" path="res://textures/controllers/sonic/looking_down/1.png" id="39_1b4e1"]
 [ext_resource type="Texture2D" uid="uid://c35ykwrm7oilo" path="res://textures/controllers/sonic/hit/0.png" id="41_8c78f"]
 [ext_resource type="Texture2D" uid="uid://jeykq1vncbpw" path="res://textures/controllers/sonic/hit/1.png" id="42_ywfei"]
+[ext_resource type="Script" path="res://scripts/controllers/player_input_controller.gd" id="43_i014j"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_yvnad"]
 animations = [{
@@ -89,6 +90,16 @@ animations = [{
 "loop": false,
 "name": &"Hit",
 "speed": 5.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Braking",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Bouncing",
+"speed": 5.0
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_knkpl"]
@@ -100,8 +111,8 @@ script = ExtResource( "1_xu54f" )
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
 frames = SubResource( "SpriteFrames_yvnad" )
-animation = &"Hit"
-frame = 1
+animation = &"Idle"
+frame = 5
 playing = true
 
 [node name="Collision" type="CollisionShape2D" parent="."]
@@ -207,3 +218,10 @@ offset_bottom = 451.0
 text = "Layer:"
 flat = true
 alignment = 0
+
+[node name="Input Controller" type="Node" parent="."]
+script = ExtResource( "43_i014j" )
+
+[node name="Casts" type="Node" parent="."]
+
+[node name="Ground" type="RayCast2D" parent="Casts"]

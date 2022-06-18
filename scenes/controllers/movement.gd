@@ -35,6 +35,7 @@ var standingWidthHalf : float = 10
 var ballWidthHalf : float = 7
 var stepUpHeight : float = 15
 var stepDownHeightMin : float = 4
+var stepDownHeightMax : float = 15
 var wallCollisionWidthHalf : float = 11
 var flatGroundSideRaycastOffset : float = -8
 var springAirborneAngleThreshold : float = 45
@@ -132,7 +133,7 @@ func getGroundRaycastPositions(groundMode : GroundMode, ceilingCheck : bool):
 	
 	return [leftRaycastPosition, rightRaycastPosition]
 
-func GetGroundRaycastDirection(groundMode : GroundMode, ceilingCheck : bool):
+func getGroundRaycastDirection(groundMode : GroundMode, ceilingCheck : bool):
 	var dir : Vector2 = Vector2.DOWN
 	if grounded:
 		match groundMode:
@@ -156,9 +157,15 @@ var currentGroundMask
 var hitResultsCache
 
 var animations = {
+	"bounce": "Bouncing",
+	"brake": "braking",
 	"hit": "Hit",
 	"idle": "Idle",
-	"run": "Running"
+	"look_down": "Looking Down",
+	"look_up": "Looking Up",
+	"roll": "Rolling",
+	"run": "Running",
+	"spindash": "Spindash"
 }
 
 func resetMovement():
@@ -246,9 +253,9 @@ func setSpringState(launchVelocity : Vector2, forceAirborne : bool, springVeloci
 
 func setHorizontalControlLock(time : float, keepLongerTime : bool = true):
 	hControlLock = true
-	hControlLockTimer = keepLongerTime if max(time, hControlLockTimer) else time
+	hControlLockTimer = max(time, hControlLockTimer) if keepLongerTime else time
 
-func setHitState(source : Vector2, damage : bool = true):
+func setHitState(source : Vector2, _damage : bool = true):
 	isHit = true
 	postHitInvulnerabilityTimer = 0
 	isBraking = false
@@ -274,7 +281,7 @@ func _ready():
 	facingDirection = 1
 	setCollisionLayer(0)
 
-func _draw():
+func _process(_delta):
 	if showDebug:
 		$Canvas/Debug.visible = true
 		$"Canvas/Debug/Input Jump".button_pressed = inputJump
@@ -293,7 +300,6 @@ func _draw():
 		else:
 			$Canvas/Debug/Angle.text = "Angle (Deg): --"
 		$Canvas/Debug/Layer.text = "Layer: " + ("A" if currentGroundMask == collisionMaskA else "B")
-	update()
 
 func applyMovement(delta : float):
 	# Clamp velocity to global speed limit
@@ -309,7 +315,7 @@ func doWallCollisions(delta : float, newGrounded : bool, groundMode : GroundMode
 	var rightCastDir : Vector2 = Vector2.RIGHT
 	var castDistance = wallCollisionWidthHalf
 	
-	if grounded:
+	if newGrounded:
 		startPosition += currentVelocity * delta
 		
 		match groundMode:
@@ -333,7 +339,7 @@ func doWallCollisions(delta : float, newGrounded : bool, groundMode : GroundMode
 	else:
 		castDistance = max(wallCollisionWidthHalf, abs(currentVelocity.x) * delta)
 	
-	if (grounded and groundSpeed < 0) or (!grounded and currentVelocity.x < 0):
+	if (newGrounded and groundSpeed < 0) or (!newGrounded and currentVelocity.x < 0):
 		var hitCountCast : RayCast2D = RayCast2D.new()
 		hitCountCast.position = startPosition
 		hitCountCast.target_position = leftCastDir * castDistance
@@ -483,7 +489,363 @@ func _physics_process(delta : float):
 		
 		doWallCollisions(delta, grounded)
 	
-	var ceilingLeft : bool = false
-	var ceilingRight : bool = false
+	var ceilResults = verticalCollisionCheck(groundRaycastDist, currentGroundMode, true)
+	var ceiling : GroundInfo = ceilResults[0] 
+	var ceilingLeft : bool = ceilResults[1]
+	var ceilingRight : bool = ceilResults[2]
 	
-	################################## FINISH FIXEDUPDATE
+	var groundedLeft = false
+	var groundedRight = false
+	
+	if grounded:
+		var groundCheckResults = groundCheck(delta)
+		currentGroundInfo = groundCheckResults[0]
+		groundedLeft = groundCheckResults[1]
+		groundedRight = groundCheckResults[2]
+		grounded = groundedLeft or groundedRight
+	else:
+		if ceiling.isValid and currentVelocity.y > 0:
+			var hitCeiling : bool = position.y >= (ceiling.point.y - heightHalf)
+			var angleDeg : float = rad2deg(ceiling.angle)
+			
+			# Check for attaching to ceiling
+			if hitCeiling and ((angleDeg >= 225 and angleDeg < 270) or (angleDeg > 90 and angleDeg <= 135)):
+				grounded = true
+				jumped = false
+				rolling = false
+				currentGroundInfo = ceiling
+				currentGroundMode = GroundMode.CEILING
+				
+				groundSpeed = currentVelocity.y * sign(sin(currentGroundInfo.angle))
+				currentVelocity.y = 0
+			elif hitCeiling:
+				position = Vector2(position.x, ceiling.point.y - heightHalf)
+				currentVelocity.y = 0
+		elif currentVelocity.y < 0:
+			var infoResults = verticalCollisionCheck(groundRaycastDist, GroundMode.FLOOR, false)
+			var info : GroundInfo = infoResults[0]
+			groundedLeft = infoResults[1]
+			groundedRight = infoResults[2]
+			
+			grounded = (groundedLeft or groundedRight) and currentVelocity.y <= 0 and position.y <= (info.point.y + heightHalf)
+			
+			if grounded:
+				if jumped and rolling:
+					position += Vector2(0, rollingPositionOffset)
+				
+				jumped = false
+				rolling = false
+				
+				currentGroundInfo = info
+				currentGroundMode = GroundMode.FLOOR
+				var angleDeg : float = rad2deg(currentGroundInfo.angle)
+				
+				if angleDeg <= 22.5 or (angleDeg >= 337.5 and angleDeg <= 360):
+					groundSpeed = currentVelocity.x
+				elif (angleDeg > 22.5 and angleDeg <= 45) or (angleDeg >= 315 and angleDeg < 337.5):
+					if abs(currentVelocity.x) > abs(currentVelocity.y): groundSpeed = currentVelocity.x
+					else: groundSpeed = currentVelocity.y * 0.5 * sign(sin(currentGroundInfo.angle))
+				elif (angleDeg > 45 and angleDeg <= 90) or (angleDeg >= 270 and angleDeg < 315):
+					if abs(currentVelocity.x) > abs(currentVelocity.y): groundSpeed = currentVelocity.x
+					else: groundSpeed = currentVelocity.y * sign(sin(currentGroundInfo.angle))
+				velocity.y = 0
+	
+	if grounded:
+		stickToGround(currentGroundInfo)
+		
+		if isHit:
+			endHitState()
+			currentVelocity.x = 0
+			groundSpeed = 0
+		
+		lowCeiling = ceiling.isValid and position.y > ceiling.point.y - lowCeilingHeight
+		
+		if currentGroundMode != GroundMode.FLOOR and abs(groundSpeed) < fallVelocityThreshold:
+			setHorizontalControlLock(horizontalControlLockTime)
+			
+			var angleDeg : int = int(round(rad2deg(currentGroundInfo.angle)))
+			
+			if angleDeg >= 90 and angleDeg <= 270:
+				grounded = false
+	
+	if hitbox != null:
+		var isBall : bool = rolling or jumped
+		var shortHitbox : bool = lookingDown or isBall
+		hitbox.shape.extents = shortHitboxSize if shortHitbox else standingHitboxSize
+		hitbox.position = Vector2(0, ((shortHitboxSize.y - standingHitboxSize.y) / 2) + (rollingPositionOffset if isBall else 0)) if shortHitbox else Vector2.ZERO
+	
+	if !grounded:
+		groundSpeed = 0
+		currentGroundInfo = GroundInfo.new()
+		currentGroundInfo.isValid = false
+		currentGroundMode = GroundMode.FLOOR
+		lowCeiling = false
+		lookingUp = false
+		lookingDown = false
+	
+	if waterLevel != null:
+		if !underwater and position.y <= waterLevel.origin.y:
+			enterWater()
+		elif underwater and position.y > waterLevel.origin.y:
+			exitWater()
+	elif underwater:
+		exitWater()
+	
+	if animator != null: animator.set("offset/flip_h", facingDirection < 0)
+	
+	rotation = deg2rad(characterAngle if smoothRotation else snapAngle(characterAngle))
+	
+	if rolling or jumped: animator.play(animations.roll)
+	
+	if isBraking:
+		animator.play(animations.brake)
+		if currentGroundMode != GroundMode.FLOOR:
+			isBraking = false
+	
+	if isSpringJumping:
+		animator.play(animations.bounce)
+		springJumpTimer -= delta
+		if springJumpTimer <= 0:
+			isSpringJumping = false
+	
+	if isJumpSpinning:
+		if grounded:
+			isJumpSpinning = false
+		else:
+			isJumpSpinning = false
+	
+	inputJumpLastFrame = inputJump
+
+func enterWater():
+	underwater = true
+	groundSpeed *= 0.5
+	currentVelocity.x *= 0.5
+	currentVelocity.y *= 0.25
+
+func exitWater():
+	underwater = false
+	currentVelocity.y = max(currentVelocity.y, min(currentVelocity.y * 2, underwaterMovementSettings.jumpVelocity * 2))
+
+func endHitState(startPostHitInvulnerability : bool = true):
+	if isHit:
+		isHit = false
+		postHitInvulnerabilityTimer = postHitInvulnerabilityDuration if startPostHitInvulnerability else 0
+
+func groundRaycast(castStart : Vector2, dir : Vector2, distance : float, minValidDistance : float, maxValidDistance : float, ceilingCheck : bool):
+	var resultHit
+	var hitCast = $Casts/Ground
+	hitCast.position = castStart
+	hitCast.target_position = dir * distance
+	
+	if hitCast.is_colliding():
+		print("Found ground")
+		var hitDistance = castStart.distance_to(hitCast.get_collision_point()) # Questionable
+		if hitDistance < minValidDistance or hitDistance > maxValidDistance:
+			pass
+		
+		##################### TODO: ONE WAY COLLISION
+		
+		return [true, hitCast]
+	
+	return [false, null]
+
+func groundCheck(delta : float):
+	var groundRaycastPositions = getGroundRaycastPositions(currentGroundMode, false)
+	var leftLocalCastPos : Vector2 = groundRaycastPositions[0]
+	var rightLocalCastPos : Vector2 = groundRaycastPositions[1]
+	var stepDownHeight : float = min(stepDownHeightMin + abs(groundSpeed * delta), stepDownHeightMax)
+	var minValidDistance : float = max(0.001, heightHalf - stepUpHeight)
+	var maxValidDistance = heightHalf + stepDownHeight
+	
+	var dir : Vector2 = getGroundRaycastDirection(currentGroundMode, false)
+	
+	var leftCastStart : Vector2 = position + leftLocalCastPos
+	var rightCastStart : Vector2 = position + rightLocalCastPos
+	
+	var groundedLeft : bool = false
+	var groundedRight : bool = false
+	
+	var groundRaycastLeft = groundRaycast(leftCastStart, dir, groundRaycastDist, minValidDistance, maxValidDistance, false)
+	var groundRaycastRight = groundRaycast(rightCastStart, dir, groundRaycastDist, minValidDistance, maxValidDistance, false)
+	groundedLeft = groundRaycastLeft[0]
+	groundedRight = groundRaycastRight[0]
+	var leftHit : RayCast2D = groundRaycastLeft[1]
+	var rightHit : RayCast2D = groundRaycastRight[1]
+	
+	var found : GroundInfo = GroundInfo.new()
+	found.isValid = false
+	
+	if groundedLeft and groundedRight:
+		var leftCompare : float = 0
+		var rightCompare : float = 0
+		
+		match currentGroundMode:
+			GroundMode.FLOOR:
+				leftCompare = leftHit.get_collision_point().y;
+				rightCompare = rightHit.get_collision_point().y;
+			GroundMode.RIGHT_WALL:
+				leftCompare = -leftHit.get_collision_point().x;
+				rightCompare = -rightHit.get_collision_point().x;
+			GroundMode.CEILING:
+				leftCompare = -leftHit.get_collision_point().y;
+				rightCompare = -rightHit.get_collision_point().y;
+			GroundMode.LEFT_WALL:
+				leftCompare = leftHit.get_collision_point().x;
+				rightCompare = rightHit.get_collision_point().x;
+			_:
+				pass
+		
+		if leftCompare >= rightCompare: found = getGroundInfo(leftHit, currentGroundMode)
+		else: found = getGroundInfo(rightHit, currentGroundMode)
+	
+	elif groundedLeft: found = getGroundInfo(leftHit, currentGroundMode)
+	elif groundedRight: found = getGroundInfo(rightHit, currentGroundMode)
+	else:
+		found = GroundInfo.new()
+		found.isValid = false
+	
+	return [found, groundedLeft, groundedRight]
+
+func verticalCollisionCheck(distance : float, groundMode : GroundMode, ceilingCheck : bool):
+	var groundRaycastPositions = getGroundRaycastPositions(currentGroundMode, false)
+	var leftLocalCastPos : Vector2 = groundRaycastPositions[0]
+	var rightLocalCastPos : Vector2 = groundRaycastPositions[1]
+	
+	var dir : Vector2 = getGroundRaycastDirection(currentGroundMode, ceilingCheck)
+	
+	var leftCastStart : Vector2 = position + leftLocalCastPos
+	var rightCastStart : Vector2 = position + rightLocalCastPos
+	
+	var hitLeft : bool = false
+	var hitRight : bool = false
+	
+	var groundRaycastLeft = groundRaycast(leftCastStart, dir, distance, 0.001, heightHalf, ceilingCheck)
+	var groundRaycastRight = groundRaycast(rightCastStart, dir, distance, 0.001, heightHalf, ceilingCheck)
+	hitLeft = groundRaycastLeft[0]
+	hitRight = groundRaycastRight[0]
+	var leftHit : RayCast2D = groundRaycastLeft[1]
+	var rightHit : RayCast2D = groundRaycastRight[1]
+	
+	var found : GroundInfo = GroundInfo.new()
+	found.isValid = false
+	
+	if hitLeft and hitRight:
+		var leftCompare : float = 0
+		var rightCompare : float = 0
+		
+		match groundMode:
+			GroundMode.FLOOR:
+				leftCompare = leftHit.get_collision_point().y;
+				rightCompare = rightHit.get_collision_point().y;
+			GroundMode.RIGHT_WALL:
+				leftCompare = -leftHit.get_collision_point().x;
+				rightCompare = -rightHit.get_collision_point().x;
+			GroundMode.CEILING:
+				leftCompare = -leftHit.get_collision_point().y;
+				rightCompare = -rightHit.get_collision_point().y;
+			GroundMode.LEFT_WALL:
+				leftCompare = leftHit.get_collision_point().x;
+				rightCompare = rightHit.get_collision_point().x;
+			_:
+				pass
+		
+		if ceilingCheck:
+			leftCompare = -leftCompare
+			rightCompare = -rightCompare
+		
+		if leftCompare >= rightCompare: found = getGroundInfo(leftHit, groundMode)
+		else: found = getGroundInfo(rightHit, groundMode)
+	elif hitLeft: found = getGroundInfo(leftHit, groundMode)
+	elif hitRight: found = getGroundInfo(rightHit, groundMode)
+	else:
+		found = GroundInfo.new()
+		found.isValid = false
+	
+	return [found, hitLeft, hitRight]
+
+func getGroundInfo(hit : RayCast2D, groundOrientation : GroundMode = GroundMode.FLOOR):
+	var info : GroundInfo = GroundInfo.new()
+	if hit.is_colliding():
+		var groundTileResults = getGroundTile(hit)
+		var groundTile : GroundTile = groundTileResults[0]
+		var tileTransform = groundTileResults[1]
+		if groundTile != null and groundTile.useFixedGroundAngle:
+			info.point = hit.get_collision_point()
+			var tileNormalVector : Vector2 = Vector2.UP
+			
+			if groundTile.isAngled:
+				tileNormalVector = tileTransform * Vector2.UP.rotated(groundTile.angle)
+			else:
+				match groundOrientation:
+					GroundMode.FLOOR:
+						tileNormalVector = Vector2.UP
+					GroundMode.RIGHT_WALL:
+						tileNormalVector = Vector2.LEFT
+					GroundMode.CEILING:
+						tileNormalVector = Vector2.DOWN
+					GroundMode.LEFT_WALL:
+						tileNormalVector = Vector2.RIGHT
+			
+			info.normal = tileNormalVector
+			info.angle = vector2ToAngle(tileNormalVector)
+		else:
+			info.point = hit.get_collision_point()
+			info.normal = hit.get_collision_normal()
+			info.angle = vector2ToAngle(hit.get_collision_normal())
+		info.isValid = true
+	return info
+
+func getGroundTile(hit : RayCast2D):
+	var tileTransform
+	var groundTile : GroundTile = null
+	var tilemap : TileMap
+	if hit.get_collider() is TileMap: tilemap = hit.get_collider()
+	if tilemap != null:
+		var checkWorldPos : Vector2 = hit.get_collision_point() + (hit.get_collision_normal() * (tilemap.cell_quadrant_size * -0.1))
+		var groundTileResults = getGroundTileMap(tilemap, checkWorldPos)
+		groundTile = groundTileResults[0]
+		tileTransform = groundTileResults[1]
+		return [groundTile, tileTransform]
+	else:
+		tileTransform = Transform2D.IDENTITY
+	return [groundTile, tileTransform]
+
+func getGroundTileMap(tileMap : TileMap, worldPosition : Vector2):
+	var tilePos : Vector2i = tileMap.world_to_map(worldPosition)
+	var groundTile = tileMap.get_cell_source_id(0, tilePos, false)
+	var tileTransform = Transform2D.IDENTITY
+	return [groundTile, tileTransform]
+
+func stickToGround(info : GroundInfo):
+	var angle : float = rad2deg(info.angle)
+	characterAngle = angle
+	
+	match currentGroundMode:
+		GroundMode.FLOOR:
+			if angle < 315 and angle > 225: currentGroundMode = GroundMode.LEFT_WALL
+			elif angle > 45 and angle < 180: currentGroundMode = GroundMode.RIGHT_WALL
+			position.y = info.point.y + heightHalf
+		GroundMode.RIGHT_WALL:
+			if angle < 45 and angle < 270: currentGroundMode = GroundMode.FLOOR
+			elif angle > 135 and angle < 270: currentGroundMode = GroundMode.CEILING
+			position.x = info.point.x - heightHalf
+		GroundMode.CEILING:
+			if angle < 135 and angle > 45: currentGroundMode = GroundMode.RIGHT_WALL
+			elif angle > 225 and angle < 360: currentGroundMode = GroundMode.LEFT_WALL
+			position.y = info.point.y - heightHalf
+		GroundMode.LEFT_WALL:
+			if angle < 225 and angle > 45: currentGroundMode = GroundMode.CEILING
+			elif angle > 315: currentGroundMode = GroundMode.FLOOR
+			position.x = info.point.x + heightHalf
+		_:
+			pass
+
+func snapAngle(angle : float):
+	var mult : int = angle + 22.5
+	mult /= 45
+	return float(mult * 45)
+
+func vector2ToAngle(vector : Vector2):
+	var angle : float = atan2(vector.y, vector.x) - (PI / 2)
+	if angle < 0: angle += PI * 2
+	return angle

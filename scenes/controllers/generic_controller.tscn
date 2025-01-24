@@ -105,18 +105,17 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_knkpl"]
 size = Vector2(19, 39)
 
-[node name="Generic Controller" type="CharacterBody2D"]
+[node name="Generic Controller" type="Node2D"]
 script = ExtResource( "1_xu54f" )
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
 frames = SubResource( "SpriteFrames_yvnad" )
 animation = &"Idle"
-frame = 5
-playing = true
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 shape = SubResource( "RectangleShape2D_knkpl" )
+disabled = true
 
 [node name="Camera" type="Camera2D" parent="."]
 current = true
@@ -225,3 +224,5 @@ script = ExtResource( "43_i014j" )
 [node name="Casts" type="Node" parent="."]
 
 [node name="Ground" type="RayCast2D" parent="Casts"]
+
+[node name="Wall" type="RayCast2D" parent="Casts"]

@@ -1,4 +1,4 @@
-extends CharacterBody2D
+extends Node2D
 
 enum SpringVelocityMode {
 	VERTICAL,
@@ -13,22 +13,30 @@ enum GroundMode {
 	LEFT_WALL
 }
 
-# Debug
-@export var showDebug : bool = true # Enables debug mode.
+## If enabled, debug information will be displayed onscreen.
+@export var showDebug : bool = true 
 
-# Animation
-@onready var animator : AnimatedSprite2D = $Sprite # Character's animated sprite.
-@export var smoothRotation : bool = false # When enabled, the character will rotate smoothly to match the ground angle they are standing on. When disabled, the character's rotation will snap to 45-degree increments.
+## Character's animated sprite.
+@onready var animator : AnimatedSprite2D = $Sprite 
+## When enabled, the character will rotate smoothly to match the ground angle they are standing on.
+## When disabled, the character's rotation will snap to 45-degree increments.
+@export var smoothRotation : bool = false 
 
-# Hitbox
+## The collider used as the character's hitbox for interacting with objects.
+## Certain actions will cause it to be resized / repositioned.
 @onready var hitbox : CollisionShape2D = $Collision
+## Size of the character's hitbox when standing.
 var standingHitboxSize : Vector2 = Vector2(19, 34)
+## Size of the character's hitbox when rolling or jumping.
 var shortHitboxSize : Vector2 = Vector2(19, 20)
 
-# General
-var standingHeightHalf : float = 20 # Half the character's height when standing.
-var ballHeightHalf : float = 15 # Half the character's height when rolling or jumping.
+## Half the character's height when standing.
+var standingHeightHalf : float = 20
+## Half the character's height when rolling or jumping.
+var ballHeightHalf : float = 15
+## Half of the character's height regardless of the player's state.
 var heightHalf : float = ballHeightHalf if rolling or jumped else standingHeightHalf
+
 var rollingPositionOffset : float = standingHeightHalf - ballHeightHalf
 var groundRaycastDist : float = 36
 var standingWidthHalf : float = 10
@@ -49,7 +57,7 @@ var baseMovementSettings : MovementSettings = MovementSettings.new()
 var underwaterMovementSettings : MovementSettings = MovementSettings.new()
 var currentMovementSettings : MovementSettings = underwaterMovementSettings if underwater else baseMovementSettings
 
-# Ground Movement
+## The global speed limit for both ground speed and overall velocity.
 var globalSpeedLimit : float = 960
 var rollingMinSpeed : float = 61.875
 var unrollThreshold : float = 30
@@ -69,17 +77,28 @@ var brakeGroundSpeedThreshold : float = 240
 var jumpSpinTagName : String = "jumpSpin"
 var springJumpDuration : float = 0.8
 
+## The transform used to define where the water level is for this scene, if any.
+## If the character's position is ever below this transform, underwater movement will activate.
 var waterLevel : Transform2D
+## The input movement the character will use the next time it runs a physics update.
+## The X and Y values are expected to be *exactly* 0.0f for no input, and (ideally)
+## exactly 1.0f or -1.0f when directional input is engaged.
 var inputMove : Vector2
+## The input jump state the character will use the next time it runs a physics update.
 var inputJump : bool
 var inputJumpLastFrame : float
 
+## Returns whether the character is currently grounded.
 var grounded : bool
+## Returns whether the character is currently rolling.
 var rolling : float
+## Returns whether the character is currently jumping due to a jump input (simply falling doesn't count).
 var jumped : float
 
+## Speed along the ground. Only valid if the character is grounded.
 var groundSpeed : float
 
+## Facing direction, encoded as a float. Always either -1 for left, 1 for right.
 var facingDirection : float
 
 var isBraking : bool = false
@@ -87,12 +106,20 @@ var isJumpSpinning : bool = false
 var isSpringJumping : bool = false
 var springJumpTimer : float = 0
 
+## True if the character is currently in the hit state.
 var isHit : bool
 var postHitInvulnerabilityTimer : float = 0
 
+## The number of rings this character currently holds.
+var rings : int = 0
+
+## True if the character is currently invulnerable due to being
+## in the hit state or being in post-hit invulnerability time.
 var isInvulnerable : bool = isHit or postHitInvulnerabilityTimer > 0
 
+## True if the character is currently looking up.
 var lookingUp : bool
+## True if the character is currently looking down.
 var lookingDown : bool
 
 var hControlLock : bool
@@ -100,6 +127,7 @@ var hControlLockTimer : float = 0
 var currentGroundInfo : GroundInfo = GroundInfo.new()
 var currentGroundMode : GroundMode = GroundMode.FLOOR
 
+## Current velocity. Setting this while the character is not airborne has no effect.
 var currentVelocity : Vector2
 
 var characterAngle : float
@@ -153,9 +181,7 @@ func getGroundRaycastDirection(groundMode : GroundMode, ceilingCheck : bool):
 
 var shouldApplyAirDrag : bool = currentVelocity.y > 0 and currentVelocity.y < airDragMaxYVelocity and abs(currentVelocity.x) > airDragMinAbsoluteXVelocity
 
-var currentGroundMask
-var hitResultsCache
-
+## Dictionary of all generic animations.
 var animations = {
 	"bounce": "Bouncing",
 	"brake": "braking",
@@ -168,6 +194,9 @@ var animations = {
 	"spindash": "Spindash"
 }
 
+var currentGroundMask
+
+## Reset velocity and other movement state.
 func resetMovement():
 	inputMove = Vector2.ZERO
 	inputJump = false
@@ -197,13 +226,11 @@ func setCollisionLayer(layer : int):
 		1:
 			currentGroundMask = collisionMaskB
 
-func setSpringState(launchVelocity : Vector2, forceAirborne : bool, springVelocityMode : SpringVelocityMode, newHorizontalControlLockTime : float = 0.0, useJumpSpinAnimation : bool = true):
-	if launchVelocity.length_squared() < 0.001:
-		return
+func setSpringState(launchVelocity : Vector2, forceAirborne : bool, springVelocityMode : SpringVelocityMode, horizontalControlLockTime : float = 0.0, useJumpSpinAnimation : bool = true):
+	if launchVelocity.length_squared() < 0.001: return
 	
 	if grounded:
-		if forceAirborne:
-			grounded = false
+		if forceAirborne: grounded = false
 		else:
 			var launchDirection : Vector2 = launchVelocity.normalized()
 			if launchDirection.angle_to_point(currentGroundInfo.normal) < springAirborneAngleThreshold:
@@ -227,7 +254,7 @@ func setSpringState(launchVelocity : Vector2, forceAirborne : bool, springVeloci
 				currentVelocity.y = launchVelocity.y
 			SpringVelocityMode.HORIZONTAL:
 				currentVelocity.x = launchVelocity.x
-				facingDirection = sign(velocity.x)
+				facingDirection = sign(currentVelocity.x)
 			_:
 				currentVelocity = launchVelocity
 				facingDirection = sign(currentVelocity.x)
@@ -246,10 +273,9 @@ func setSpringState(launchVelocity : Vector2, forceAirborne : bool, springVeloci
 			isJumpSpinning = false
 			isSpringJumping = true
 			springJumpTimer = springJumpDuration
-		############################################################# endHitState()
+		endHitState()
 	
-	if newHorizontalControlLockTime > 0:
-		setHorizontalControlLock(newHorizontalControlLockTime)
+	if horizontalControlLockTime > 0: setHorizontalControlLock(horizontalControlLockTime)
 
 func setHorizontalControlLock(time : float, keepLongerTime : bool = true):
 	hControlLock = true
@@ -279,6 +305,7 @@ func setHitState(source : Vector2, _damage : bool = true):
 	
 func _ready():
 	facingDirection = 1
+	rings = 0
 	setCollisionLayer(0)
 
 func _process(_delta):
@@ -313,7 +340,7 @@ func doWallCollisions(delta : float, newGrounded : bool, groundMode : GroundMode
 	var startPosition : Vector2 = position
 	var leftCastDir : Vector2 = Vector2.LEFT
 	var rightCastDir : Vector2 = Vector2.RIGHT
-	var castDistance = wallCollisionWidthHalf
+	var castDistance : float = wallCollisionWidthHalf
 	
 	if newGrounded:
 		startPosition += currentVelocity * delta
@@ -340,9 +367,43 @@ func doWallCollisions(delta : float, newGrounded : bool, groundMode : GroundMode
 		castDistance = max(wallCollisionWidthHalf, abs(currentVelocity.x) * delta)
 	
 	if (newGrounded and groundSpeed < 0) or (!newGrounded and currentVelocity.x < 0):
-		var hitCountCast : RayCast2D = RayCast2D.new()
-		hitCountCast.position = startPosition
-		hitCountCast.target_position = leftCastDir * castDistance
+		var hitCast : RayCast2D = $Casts/Wall
+		hitCast.position = startPosition
+		hitCast.target_position = leftCastDir * castDistance
+		if hitCast.is_colliding():
+			if grounded:
+				match groundMode:
+					GroundMode.FLOOR:
+						currentVelocity.x = (hitCast.get_collision_point().x - (position.x - castDistance)) / delta
+					GroundMode.RIGHT_WALL:
+						currentVelocity.y = (hitCast.get_collision_point().y - (position.x - castDistance)) / delta
+					GroundMode.CEILING:
+						currentVelocity.x = (hitCast.get_collision_point().x - (position.x + castDistance)) / delta
+					GroundMode.LEFT_WALL:
+						currentVelocity.y = (hitCast.get_collision_point().y - (position.y + castDistance)) / delta
+				groundSpeed = 0
+			else:
+				position = Vector2(hitCast.get_collision_point().x + wallCollisionWidthHalf, position.y)
+				currentVelocity.x = 0
+	elif (grounded and groundSpeed > 0) or (!grounded and currentVelocity.x > 0):
+		var hitCast : RayCast2D = $Casts/Wall
+		hitCast.position = startPosition
+		hitCast.target_position = leftCastDir * castDistance
+		if hitCast.is_colliding():
+			if grounded:
+				match groundMode:
+					GroundMode.FLOOR:
+						currentVelocity.x = (hitCast.get_collision_point().x - (position.x + castDistance)) / delta
+					GroundMode.RIGHT_WALL:
+						currentVelocity.y = (hitCast.get_collision_point().y - (position.x + castDistance)) / delta
+					GroundMode.CEILING:
+						currentVelocity.x = (hitCast.get_collision_point().x - (position.x - castDistance)) / delta
+					GroundMode.LEFT_WALL:
+						currentVelocity.y = (hitCast.get_collision_point().y - (position.y - castDistance)) / delta
+				groundSpeed = 0
+			else:
+				position = Vector2(hitCast.get_collision_point().x - wallCollisionWidthHalf, position.y)
+				currentVelocity.x = 0
 		
 		############################################## PLEASE FINISH FUNCTION
 
@@ -350,9 +411,6 @@ func _physics_process(delta : float):
 	var accelSpeedCap : float = currentMovementSettings.groundTopSpeed
 	if postHitInvulnerabilityTimer > 0:
 		postHitInvulnerabilityTimer = move_toward(postHitInvulnerabilityTimer, 0, delta)
-		if postHitInvulnerabilityTimer <= 0:
-			animator.play(animations.hit)
-			animator.speed_scale = 1
 	
 	if grounded:
 		var slopeFactor : float = 0
@@ -380,8 +438,7 @@ func _physics_process(delta : float):
 		else:
 			if hControlLock:
 				hControlLockTimer -= delta
-				if hControlLockTimer <= 0:
-					hControlLock = false
+				if hControlLockTimer <= 0: hControlLock = false
 			
 			var prevGroundSpeedSign : float = sign(groundSpeed)
 			
@@ -391,16 +448,13 @@ func _physics_process(delta : float):
 			
 			if !hControlLock and inputMove.x != 0:
 				var acceleration : float = 0
-				var movingAgainstCurrentSpeed : bool = groundSpeed == 0 and sign(inputMove.x) != sign(groundSpeed)
+				var movingAgainstCurrentSpeed : bool = groundSpeed != 0 and sign(inputMove.x) != sign(groundSpeed)
 				
-				if rolling and movingAgainstCurrentSpeed:
-					acceleration = currentMovementSettings.rollingDeceleration
+				if rolling and movingAgainstCurrentSpeed: acceleration = currentMovementSettings.rollingDeceleration
 				elif !rolling and movingAgainstCurrentSpeed:
 					acceleration = currentMovementSettings.deceleration
-					if !isBraking and currentGroundMode == GroundMode.FLOOR and abs(groundSpeed) >= brakeGroundSpeedThreshold:
-						isBraking = true
-				elif !rolling and !movingAgainstCurrentSpeed:
-					acceleration = currentMovementSettings.groundAcceleration
+					if !isBraking and currentGroundMode == GroundMode.FLOOR and abs(groundSpeed) >= brakeGroundSpeedThreshold: isBraking = true
+				elif !rolling and !movingAgainstCurrentSpeed: acceleration = currentMovementSettings.groundAcceleration
 				
 				if inputMove.x < 0 and groundSpeed > -accelSpeedCap:
 					groundSpeed = max(-accelSpeedCap, groundSpeed + (inputMove.x * acceleration) * delta)
@@ -414,8 +468,7 @@ func _physics_process(delta : float):
 			groundSpeed = clamp(groundSpeed, -globalSpeedLimit, globalSpeedLimit)
 			
 			# We're now moving the other direction, stop braking early if needed
-			if isBraking and sign(groundSpeed) != prevGroundSpeedSign:
-				isBraking = false
+			if isBraking and sign(groundSpeed) != prevGroundSpeedSign: isBraking = false
 			
 			if rolling and abs(groundSpeed) < unrollThreshold:
 				rolling = false
@@ -472,8 +525,7 @@ func _physics_process(delta : float):
 				
 				facingDirection = sign(inputMove.x)
 			
-			if shouldApplyAirDrag:
-				velocity.x -= velocity.x * currentMovementSettings.airDrag
+			if shouldApplyAirDrag: currentVelocity.x -= currentVelocity.x * currentMovementSettings.airDrag
 			
 			if characterAngle > 0 and characterAngle <= 180:
 				characterAngle -= delta * uprightRotationRate
@@ -484,8 +536,9 @@ func _physics_process(delta : float):
 		
 		applyMovement(delta)
 		
+		# Apply gravity
 		var gravity = currentMovementSettings.hitStateGravity if isHit else currentMovementSettings.gravity
-		currentVelocity.y = max(currentVelocity.y + (gravity * delta), -currentMovementSettings.terminalVelocity)
+		currentVelocity.y = max(currentVelocity.y + (gravity * Vector2.DOWN.y * delta), -currentMovementSettings.terminalVelocity)
 		
 		doWallCollisions(delta, grounded)
 	
@@ -507,6 +560,8 @@ func _physics_process(delta : float):
 		if ceiling.isValid and currentVelocity.y > 0:
 			var hitCeiling : bool = position.y >= (ceiling.point.y - heightHalf)
 			var angleDeg : float = rad2deg(ceiling.angle)
+			
+			print(angleDeg)
 			
 			# Check for attaching to ceiling
 			if hitCeiling and ((angleDeg >= 225 and angleDeg < 270) or (angleDeg > 90 and angleDeg <= 135)):
@@ -548,7 +603,7 @@ func _physics_process(delta : float):
 				elif (angleDeg > 45 and angleDeg <= 90) or (angleDeg >= 270 and angleDeg < 315):
 					if abs(currentVelocity.x) > abs(currentVelocity.y): groundSpeed = currentVelocity.x
 					else: groundSpeed = currentVelocity.y * sign(sin(currentGroundInfo.angle))
-				velocity.y = 0
+				currentVelocity.y = 0
 	
 	if grounded:
 		stickToGround(currentGroundInfo)
@@ -591,7 +646,7 @@ func _physics_process(delta : float):
 	elif underwater:
 		exitWater()
 	
-	if animator != null: animator.set("offset/flip_h", facingDirection < 0)
+	animator.set_flip_h(facingDirection < 0)
 	
 	rotation = deg2rad(characterAngle if smoothRotation else snapAngle(characterAngle))
 	
@@ -632,13 +687,11 @@ func endHitState(startPostHitInvulnerability : bool = true):
 		postHitInvulnerabilityTimer = postHitInvulnerabilityDuration if startPostHitInvulnerability else 0
 
 func groundRaycast(castStart : Vector2, dir : Vector2, distance : float, minValidDistance : float, maxValidDistance : float, ceilingCheck : bool):
-	var resultHit
 	var hitCast = $Casts/Ground
 	hitCast.position = castStart
 	hitCast.target_position = dir * distance
 	
 	if hitCast.is_colliding():
-		print("Found ground")
 		var hitDistance = castStart.distance_to(hitCast.get_collision_point()) # Questionable
 		if hitDistance < minValidDistance or hitDistance > maxValidDistance:
 			pass
@@ -647,7 +700,7 @@ func groundRaycast(castStart : Vector2, dir : Vector2, distance : float, minVali
 		
 		return [true, hitCast]
 	
-	return [false, null]
+	return [false, hitCast]
 
 func groundCheck(delta : float):
 	var groundRaycastPositions = getGroundRaycastPositions(currentGroundMode, false)
@@ -766,55 +819,11 @@ func verticalCollisionCheck(distance : float, groundMode : GroundMode, ceilingCh
 func getGroundInfo(hit : RayCast2D, groundOrientation : GroundMode = GroundMode.FLOOR):
 	var info : GroundInfo = GroundInfo.new()
 	if hit.is_colliding():
-		var groundTileResults = getGroundTile(hit)
-		var groundTile : GroundTile = groundTileResults[0]
-		var tileTransform = groundTileResults[1]
-		if groundTile != null and groundTile.useFixedGroundAngle:
-			info.point = hit.get_collision_point()
-			var tileNormalVector : Vector2 = Vector2.UP
-			
-			if groundTile.isAngled:
-				tileNormalVector = tileTransform * Vector2.UP.rotated(groundTile.angle)
-			else:
-				match groundOrientation:
-					GroundMode.FLOOR:
-						tileNormalVector = Vector2.UP
-					GroundMode.RIGHT_WALL:
-						tileNormalVector = Vector2.LEFT
-					GroundMode.CEILING:
-						tileNormalVector = Vector2.DOWN
-					GroundMode.LEFT_WALL:
-						tileNormalVector = Vector2.RIGHT
-			
-			info.normal = tileNormalVector
-			info.angle = vector2ToAngle(tileNormalVector)
-		else:
-			info.point = hit.get_collision_point()
-			info.normal = hit.get_collision_normal()
-			info.angle = vector2ToAngle(hit.get_collision_normal())
+		info.point = hit.get_collision_point()
+		info.normal = hit.get_collision_normal()
+		info.angle = vector2ToAngle(hit.get_collision_normal())
 		info.isValid = true
 	return info
-
-func getGroundTile(hit : RayCast2D):
-	var tileTransform
-	var groundTile : GroundTile = null
-	var tilemap : TileMap
-	if hit.get_collider() is TileMap: tilemap = hit.get_collider()
-	if tilemap != null:
-		var checkWorldPos : Vector2 = hit.get_collision_point() + (hit.get_collision_normal() * (tilemap.cell_quadrant_size * -0.1))
-		var groundTileResults = getGroundTileMap(tilemap, checkWorldPos)
-		groundTile = groundTileResults[0]
-		tileTransform = groundTileResults[1]
-		return [groundTile, tileTransform]
-	else:
-		tileTransform = Transform2D.IDENTITY
-	return [groundTile, tileTransform]
-
-func getGroundTileMap(tileMap : TileMap, worldPosition : Vector2):
-	var tilePos : Vector2i = tileMap.world_to_map(worldPosition)
-	var groundTile = tileMap.get_cell_source_id(0, tilePos, false)
-	var tileTransform = Transform2D.IDENTITY
-	return [groundTile, tileTransform]
 
 func stickToGround(info : GroundInfo):
 	var angle : float = rad2deg(info.angle)
